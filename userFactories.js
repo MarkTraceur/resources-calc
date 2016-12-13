@@ -1,12 +1,12 @@
 var userFactories = [
 	{
 		name: "Brick factory",
-		level: 185
+		level: 188
 	},
 
 	{
 		name: "Concrete factory",
-		level: 52
+		level: 62
 	},
 
 	{
@@ -21,7 +21,7 @@ var userFactories = [
 
 	{
 		name: "Oil refinery",
-		level: 14
+		level: 22
 	},
 
 	{
@@ -36,7 +36,7 @@ var userFactories = [
 
 	{
 		name: "Insecticide factory",
-		level: 9
+		level: 12
 	},
 
 	{
@@ -61,7 +61,7 @@ var userFactories = [
 
 	{
 		name: "Arms factory",
-		level: 4
+		level: 6
 	},
 
 	{
