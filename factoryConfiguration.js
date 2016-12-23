@@ -1,4 +1,5 @@
 var factories = require( './factories' ),
+	resources = require( './resources' ),
 	userFactories = require( './userFactories' ),
 	userWarehouses = require( './userWarehouses' ),
 	prices = require( './prices' ),
@@ -9,6 +10,7 @@ var factories = require( './factories' ),
 
 function FactoryConfiguration( config, warehouses ) {
 	var i, factory, warehouse,
+		wkeys = [],
 		inOrder = config.inOrder;
 
 	this.inOrder = [];
@@ -27,10 +29,17 @@ function FactoryConfiguration( config, warehouses ) {
 	this.warehouses.byName = {};
 
 	for ( i = 0; i < warehouses.length; i++ ) {
+		wkeys.push( warehouses[ i ].name );
 		warehouse = new Warehouse( warehouses[ i ] );
-		this.warehouses.inOrder.push( warehouse );
 		this.warehouses.byName[ warehouse.name ] = warehouse;
 	}
+
+	wkeys = util.sortResources( wkeys );
+
+	for ( i = 0; i < wkeys.length; i++ ) {
+		this.warehouses.inOrder.push( this.warehouses.byName[ wkeys[ i ] ] );
+	}
+
 }
 
 FactoryConfiguration.prototype.getFactoriesByUpgradeEfficiency = function ( cb ) {
@@ -88,7 +97,9 @@ function getNull() {
 
 function getCurrentUser() {
 	return userFactories.getFactoryLevels().then( function ( levels ) {
-		return new FactoryConfiguration( deepCopy( levels ), deepCopy( userWarehouses.data ) );
+		return userWarehouses.getWarehouseLevels().then( function ( whlevels ) {
+			return new FactoryConfiguration( deepCopy( levels ), deepCopy( whlevels ) );
+		} );
 	} );
 }
 

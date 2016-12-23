@@ -38,9 +38,23 @@ function getFactoryLevels() {
 	} );
 }
 
+function saveWarehouseLevel( name, level ) {
+	return WarehouseLevel.sync().then( function () {
+		return WarehouseLevel.upsert( { name: name, level: level } );
+	} );
+}
+
+function getWarehouseLevels() {
+	return WarehouseLevel.sync().then( function () {
+		return WarehouseLevel.findAll();
+	} );
+}
+
 module.exports = {
 	WarehouseLevel: WarehouseLevel,
 	FactoryLevel: FactoryLevel,
 	saveFactoryLevel: saveFactoryLevel,
-	getFactoryLevels: getFactoryLevels
+	getFactoryLevels: getFactoryLevels,
+	saveWarehouseLevel: saveWarehouseLevel,
+	getWarehouseLevels: getWarehouseLevels
 };

@@ -66,9 +66,7 @@ getNextEfficient( function ( upgrades ) {
 
 		ckeys = Object.keys( consumeFiveDays );
 
-		ckeys = ckeys.sort( function ( a, b ) {
-			return resources.inMarketOrder.indexOf( a ) - resources.inMarketOrder.indexOf( b );
-		} );
+		ckeys = util.sortResources( ckeys );
 
 		console.log( '=== RESOURCES NEEDED ===' );
 		for ( i = 0; i < ckeys.length; i++ ) {
