@@ -87,7 +87,9 @@ function getNull() {
 }
 
 function getCurrentUser() {
-	return new FactoryConfiguration( deepCopy( userFactories.data ), deepCopy( userWarehouses.data ) );
+	return userFactories.getFactoryLevels().then( function ( levels ) {
+		return new FactoryConfiguration( deepCopy( levels ), deepCopy( userWarehouses.data ) );
+	} );
 }
 
 module.exports = {
