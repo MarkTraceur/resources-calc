@@ -120,7 +120,7 @@ Factory.prototype.getUpgradeEfficiency = function ( cb ) {
 
 	function maybeCb() {
 		if ( profitIncrease !== undefined && upgradePrice !== undefined ) {
-			cb( profitIncrease / upgradePrice, upgradePrice );
+			cb( upgradePrice, profitIncrease );
 		}
 	}
 

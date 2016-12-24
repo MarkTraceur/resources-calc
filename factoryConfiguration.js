@@ -40,6 +40,7 @@ function FactoryConfiguration( config, warehouses ) {
 		this.warehouses.inOrder.push( this.warehouses.byName[ wkeys[ i ] ] );
 	}
 
+	this.pendingUpgradeCosts = {};
 }
 
 FactoryConfiguration.prototype.getFactoriesByUpgradeEfficiency = function ( cb ) {
@@ -57,10 +58,39 @@ FactoryConfiguration.prototype.getFactoriesByUpgradeEfficiency = function ( cb )
 
 	for ( i = 0; i < fs.length; i++ ) {
 		( function ( fac ) {
-			var wh = fc.warehouses.byName[ fac.produces ];
+			fac.getUpgradeEfficiency( function ( price, profit ) {
+				var i, efficiency, currentCost, wh, whkeys,
+					whupgrades = {},
+					upgrade = deepCopy( fac.upgrade ),
+					ukeys = Object.keys( upgrade );
 
-			fac.getUpgradeEfficiency( function ( efficiency, price ) {
-				efficiencies.push( { name: fac.name, efficiency: efficiency, price: price, resources: deepCopy( fac.upgrade ) } );
+				for ( i = 0; i < ukeys.length; i++ ) {
+					if ( ukeys[ i ] === 'Credits' ) {
+						continue;
+					}
+
+					wh = fc.warehouses.byName[ ukeys[ i ] ];
+					fc.pendingUpgradeCosts[ ukeys[ i ] ] = fc.pendingUpgradeCosts[ ukeys[ i ] ] || 0;
+					currentCost = fc.pendingUpgradeCosts[ ukeys[ i ] ];
+
+					while ( currentCost + upgrade[ ukeys[ i ] ] > wh.capacity ) {
+						price += wh.upgrade;
+						wh.setLevel( wh.level + 1 );
+						whupgrades[ ukeys[ i ] ] = wh.level;
+					}
+				}
+
+				whkeys = Object.keys( whupgrades );
+
+				for ( i = 0; i < whkeys.length; i++ ) {
+					fc.warehouses.byName[ whkeys[ i ] ].setLevel(
+						fc.warehouses.byName[ whkeys[ i ] ].level - whupgrades[ whkeys[ i ] ]
+					);
+				}
+
+				efficiency = profit / price;
+
+				efficiencies.push( { name: fac.name, efficiency: efficiency, price: price, resources: deepCopy( fac.upgrade ), profit: profit, warehouseUpgrades: whupgrades } );
 				maybeCb();
 			} );
 		}( fs[ i ] ) );
@@ -90,6 +120,67 @@ FactoryConfiguration.prototype.getFiveDays = function () {
 
 	return totals;
 };
+
+FactoryConfiguration.prototype.getNextEfficient = function ( cb ) {
+	var fc = this;
+
+	this.getFactoriesByUpgradeEfficiency( function ( eff ) {
+		var i,
+			upg = eff[ 0 ],
+			whupgrades = upg.warehouseUpgrades,
+			whkeys = Object.keys( whupgrades ),
+			name = upg.name,
+			fac = fc.byName[ name ];
+
+		fac.setLevel( fac.level + 1 );
+
+		for ( i = 0; i < whkeys.length; i++ ) {
+			fc.warehouses.byName[ whkeys[ i ] ].setLevel(
+				fc.warehouses.byName[ whkeys[ i ] ].level + whupgrades[ whkeys[ i ] ]
+			);
+		}
+
+		cb( {
+			name: name,
+			level: fac.level,
+			price: upg.price,
+			resources: upg.resources,
+			warehouseUpgrades: upg.warehouseUpgrades
+		} );
+	} );
+};
+
+FactoryConfiguration.prototype.getTenNextEfficientInternal = function ( upgrades, cb ) {
+	var fc = this;
+
+	this.pendingUpgradeCosts = this.getFiveDays();
+
+	this.getNextEfficient( function ( upgrade ) {
+		var i,
+			us = upgrade.resources,
+			ukeys = Object.keys( us );
+
+		for ( i = 0; i < ukeys.length; i++ ) {
+			fc.pendingUpgradeCosts[ ukeys[ i ] ] = fc.pendingUpgradeCosts[ ukeys[ i ] ] || 0;
+			fc.pendingUpgradeCosts[ ukeys[ i ] ] += us[ ukeys[ i ] ];
+		}
+
+		upgrades.push( upgrade );
+
+		if ( upgrades.length >= 10 ) {
+			fc.pendingUpgradeCosts = {};
+			cb( upgrades );
+			return;
+		}
+
+		fc.getTenNextEfficientInternal( upgrades, cb );
+	} );
+};
+
+FactoryConfiguration.prototype.getTenNextEfficient = function ( cb ) {
+	this.getTenNextEfficientInternal( [], cb );
+};
+
 
 function getNull() {
 	return new FactoryConfiguration( deepCopy( factories.data ) );

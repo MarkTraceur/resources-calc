@@ -4,28 +4,12 @@ var util = require( './util' ),
 	facpromise = fc.getCurrentUser(),
 	upgrades = [];
 
-function getNextEfficient( cb ) {
-	facpromise.then( function ( facs ) {
-		facs.getFactoriesByUpgradeEfficiency( function ( eff ) {
-			var upg = eff[ 0 ],
-				name = upg.name,
-				fac = facs.byName[ name ];
-			upgrades.push( { name: name, level: fac.level + 1, price: upg.price, resources: upg.resources } );
-			fac.setLevel( fac.level + 1 );
-
-			if ( upgrades.length >= 10 ) {
-				cb( upgrades );
-				return;
-			}
-
-			getNextEfficient( cb );
-		} );
-	} );
-}
-
-getNextEfficient( function ( upgrades ) {
-	facpromise.then( function ( facs ) {
-		var i, j, upg, ukey, ckey, consumeFiveDays, ckeys, ukeys,
+facpromise.then( function ( facs ) {
+	facs.getTenNextEfficient( function ( upgrades ) {
+		var i, j, upg, ukey, ckey, consumeFiveDays, ckeys, ukeys, fukeys,
+			whkeys,
+			whupgrades = {},
+			facupgrades = {},
 			upgradeConsume = {},
 			totalprice = 0;
 
@@ -33,7 +17,7 @@ getNextEfficient( function ( upgrades ) {
 			upg = upgrades[ i ];
 			totalprice += upg.price;
 
-			console.log( upg.name + ' to level ' + upg.level + ' - costs ' + util.formatNum( upg.price ) );
+			facupgrades[ upg.name ] = upg.level;
 
 			ukeys = Object.keys( upg.resources );
 
@@ -46,6 +30,28 @@ getNextEfficient( function ( upgrades ) {
 
 				upgradeConsume[ ukey ] += upg.resources[ ukey ];
 			}
+
+			whkeys = Object.keys( upg.warehouseUpgrades );
+
+			for ( j = 0; j < whkeys.length; j++ ) {
+				whupgrades[ whkeys[ j ] ] = upg.warehouseUpgrades[ whkeys[ j ] ];
+			}
+		}
+
+		whkeys = Object.keys( whupgrades );
+
+		console.log( '== WAREHOUSE UPGRADES ==' );
+
+		for ( i = 0; i < whkeys.length; i++ ) {
+			console.log( whkeys[ i ] + ' to ' + whupgrades[ whkeys[ i ] ] );
+		}
+
+		fukeys = Object.keys( facupgrades );
+
+		console.log( '== FACTORY UPGRADES ==' );
+
+		for ( i = 0; i < fukeys.length; i++ ) {
+			console.log( fukeys[ i ] + ' to ' + facupgrades[ fukeys[ i ] ] );
 		}
 
 		console.log( 'Total price: ', util.formatNum( totalprice ) );
