@@ -1,7 +1,8 @@
 var Sequelize = require( 'sequelize' ),
-	sequelize = new Sequelize( 'resourcelevels', 'root', 'trustno1', {
+	config = require( './config.json' ),
+	sequelize = new Sequelize( config.db.name, config.db.user, config.db.pass, {
 		logging: false,
-		host: 'localhost'
+		host: config.db.host
 	} ),
 
 	WarehouseLevel = sequelize.define( 'warehouselevel', {

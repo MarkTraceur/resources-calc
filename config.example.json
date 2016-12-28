@@ -1,0 +1,8 @@
+{
+	"db": {
+		"name": "resources",
+		"user": "root",
+		"pass": "sup3rs3cur3pa55word",
+		"host": "localhost"
+	}
+}
